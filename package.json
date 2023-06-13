@@ -1,0 +1,17 @@
+{
+  "name": "webgpu-issue",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "canary": "open -b com.google.Chrome.canary http://localhost:5173/webgpu-issue/",
+    "deploy": "rm -rf ~/Sites/webgpu-issue && cp -r dist/ ~/Sites/webgpu-issue"
+  },
+  "devDependencies": {
+    "vite": "^4.3.9",
+    "vite-plugin-string": "^1.2.1"
+  }
+}
