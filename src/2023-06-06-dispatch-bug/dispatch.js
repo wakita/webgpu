@@ -45,7 +45,7 @@ export async function initialize(clickable, p) {
   clickable.addEventListener('click', () => on_click(p))
 
   // writeBuffer のテスト：偶奇性に応じて 0, 1 で埋めた配列を GPU に送る
-  let _A = new Int32Array(N).map((_, i) => i % 2 == 0 ? 0 : 1)
+  let _A = new Uint32Array(N).map((_, i) => i % 2)
   GPU.queue.writeBuffer(A_G, 0, _A)
 }
 
@@ -54,7 +54,7 @@ export async function on_click(p) {
 
   // Staging buffer (A_S) への書き込みを待って、そのコピー (A) を取得
   await A_S.mapAsync(GPUMapMode.READ)
-  const A = new Int32Array(A_S.getMappedRange()).slice()
+  const A = new Uint32Array(A_S.getMappedRange()).slice()
   A_S.unmap()
 
   const freq = {}
