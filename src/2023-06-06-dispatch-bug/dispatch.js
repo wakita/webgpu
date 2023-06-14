@@ -5,9 +5,8 @@ const APP = '2023-06-06-dispatch-bug'
 
 import {G, ADAPTER, GPU} from '../core/startup.js'
 
-const F32_SIZE = new Float32Array(0).BYTES_PER_ELEMENT
 const N = 1000
-const BUFSIZE = F32_SIZE * N
+var A = new Uint32Array(N).map((_, i) => i % 2)
 
 /**
  * Buffer naming convention
@@ -19,10 +18,10 @@ const BUFSIZE = F32_SIZE * N
 
 const A_G = GPU.createBuffer({
   label: `${APP} - Compute buffer for A`,
-  size: BUFSIZE, usage: G.B.STORAGE  | G.B.COPY_DST | G.B.COPY_SRC })
+  size: A.byteLength, usage: G.B.STORAGE  | G.B.COPY_DST | G.B.COPY_SRC })
 const A_S = GPU.createBuffer({
   label: `${APP} - Staging buffer for A`,
-  size: BUFSIZE, usage: G.B.MAP_READ | G.B.COPY_DST })
+  size: A.byteLength, usage: G.B.MAP_READ | G.B.COPY_DST })
 
 import DISPATCH_CODE from './dispatch.wgsl';
 
@@ -44,16 +43,14 @@ function encode() {
   pass.setBindGroup(0, bind_group)
   pass.dispatchWorkgroups(1)
   pass.end()
-  encoder.copyBufferToBuffer(A_G, 0, A_S, 0, BUFSIZE)  // Staging A
+  encoder.copyBufferToBuffer(A_G, 0, A_S, 0, A.byteLength)  // Staging A
   return encoder.finish()
 }
 
 export async function initialize(clickable, p) {
   clickable.addEventListener('click', () => on_click(p))
 
-  // writeBuffer のテスト：偶奇性に応じて 0, 1 で埋めた配列を GPU に送る
-  let _A = new Uint32Array(N).map((_, i) => i % 2)
-  GPU.queue.writeBuffer(A_G, 0, _A)
+  GPU.queue.writeBuffer(A_G, 0, A)  // A_G[:] := A[:]
 }
 
 export async function on_click(p) {
@@ -61,7 +58,7 @@ export async function on_click(p) {
 
   // Staging buffer (A_S) への書き込みを待って、そのコピー (A) を取得
   await A_S.mapAsync(GPUMapMode.READ)
-  const A = new Uint32Array(A_S.getMappedRange()).slice()
+  A = new Uint32Array(A_S.getMappedRange()).slice()
   A_S.unmap()
 
   const freq = {}
