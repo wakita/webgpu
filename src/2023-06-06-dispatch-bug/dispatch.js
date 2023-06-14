@@ -1,6 +1,8 @@
 // See gman's answer to "WebGPU compute shader gives unexpected result"
 // https://stackoverflow.com/a/76437808/5850002
 
+const APP = '2023-06-06-dispatch-bug'
+
 import {G, ADAPTER, GPU} from '../core/startup.js'
 
 const F32_SIZE = new Float32Array(0).BYTES_PER_ELEMENT
@@ -15,18 +17,23 @@ const BUFSIZE = F32_SIZE * N
  * <X>_S: A RO staging buffer corresponding to a shader array named <X>.
  **/
 
-const A_G = GPU.createBuffer({ size: BUFSIZE, usage: G.B.STORAGE  | G.B.COPY_DST | G.B.COPY_SRC })  // Compute buffer
-const A_S = GPU.createBuffer({ size: BUFSIZE, usage: G.B.MAP_READ | G.B.COPY_DST })  // Staging buffer
+const A_G = GPU.createBuffer({
+  label: `${APP} - Compute buffer for A`,
+  size: BUFSIZE, usage: G.B.STORAGE  | G.B.COPY_DST | G.B.COPY_SRC })
+const A_S = GPU.createBuffer({
+  label: `${APP} - Staging buffer for A`,
+  size: BUFSIZE, usage: G.B.MAP_READ | G.B.COPY_DST })
 
 import DISPATCH_CODE from './dispatch.wgsl';
 
 function encode() {
   const pipeline = GPU.createComputePipeline({
-    compute: { module: GPU.createShaderModule({ code: DISPATCH_CODE }), entryPoint: "test" },
-    label: 'dispatch', layout: 'auto',
+    compute: { module: GPU.createShaderModule({ label: `${APP} - shader`, code: DISPATCH_CODE }), entryPoint: "test" },
+    label: `${APP} - pipeline`, layout: 'auto',
   })
 
   const bind_group = GPU.createBindGroup({
+    label: `${APP} - bind group`,
     layout: pipeline.getBindGroupLayout(0),  // 'layout: auto' に作成された BindGroupLayout を取得
     entries: [{ binding: 0, resource: { buffer: A_G }}],
   })
